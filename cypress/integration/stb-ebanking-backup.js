@@ -1,37 +1,65 @@
+const url = 'https://ebank.stb.com.mk/';
+
+// TODO (filip): Pass this as environment variables
+const username = '<your-username>';
+const password = '<your-password>';
+const accountNumber = '<your-account-number>';
+const year = '<year>';
+const month = '<month>';
+
+const ACCOUNT_NUMBER_SELECTOR = '.account-id-lnk > span > a';
+const WARRANTS_CONTAINER_SELECTOR = '#MainContainer_ctl00_regMainContent_regMainContent';
+const WARRANTS_SELECTOR = '.igdm_MenuItemHorizontalRootLink > span';
+const WARRANTS_LABEL = 'Налози';
+const DATE_INPUT_SELECTOR = '#MainContainer_ctl00_regTopMenu_WebDateChooser1 > tbody > tr > td.igte_Inner > input.igte_EditInContainer';
+const SHOW_WARRANT_SELECTOR = '[id^="MainContainer_ctl00_regMainContent_payments_grdPayments_ctl"][id$=_lnkShow]';
+const WARRANT_FRAME_SELECTOR = '#MainContainer_ctl00_regMainContent_ucpp30_divNalogRamka';
+const GO_BACK_SELECTOR = '#MainContainer_ctl00_regRightMenu_paymentactions_lnkBack';
+
 describe('STB eBanking Backup', () => {
-  it('Opens https://ebank.stb.com.mk/', () => {
-    cy.visit('https://ebank.stb.com.mk/', {
+  it('Opens STB eBanking', () => {
+    cy.visit(url, {
       auth: {
-        // TODO (filip): Pass this as environment variables
-        username: '<your-username>',
-        password: '<your-password>',
+        username,
+        password,
       },
     });
 
-    cy.get('#MainContainer_ctl00_regMainContent_accounts_gridAccountsRetail_ctl03_Payments').click();
-    cy.get('#MainContainer_ctl00_regTopMenu_WebDateChooser1 .igte_Button').click();
+    cy.get(ACCOUNT_NUMBER_SELECTOR).contains(accountNumber).click();
+    cy.get(WARRANTS_SELECTOR).contains(WARRANTS_LABEL).click();
 
-    cy.get('#MainContainer_ctl00_regTopMenu_WebMonthCalendar1 .igmc_Day[style*="font-weight: bold;"]').then($dateElements => {
-      cy.log(`$dateElements.length: ${$dateElements.length}`);
+    for (const date of generateDateStringsForYearMonth(year, month)) {
+      cy.get(DATE_INPUT_SELECTOR).type(`${date}{enter}`);
       
-      for (let i = 0; i < $dateElements.length; i++) {
-        cy.log(`i: ${i}`);
-        
-        let correctI = i > 1 ? i - 1 : i; // The currently selected date gets a different class, that's why the `- 1` subraction
-        cy.get('#MainContainer_ctl00_regTopMenu_WebMonthCalendar1 .igmc_Day[style*="font-weight: bold;"]').eq(correctI).click({force: true});
-
-        cy.get('[id^="MainContainer_ctl00_regMainContent_payments_grdPayments_ctl"][id$=_lnkShow]').then($showButtonElements => {
-          cy.log(`$showButtonElements.length: ${$showButtonElements.length}`);
-
-          for (let j = 0; j < $showButtonElements.length; j++) {
-            cy.log(`j: ${j}`);
-
-            cy.get('[id^="MainContainer_ctl00_regMainContent_payments_grdPayments_ctl"][id$=_lnkShow]').eq(j).click();
-            cy.get('#MainContainer_ctl00_regMainContent_ucpp30_divNalogRamka').screenshot();
-            cy.get('#MainContainer_ctl00_regRightMenu_paymentactions_lnkBack').click();
-          }
-        });        
-      }
-    });
+      cy.get(WARRANTS_CONTAINER_SELECTOR).then($warrantsContainer => {
+        if ($warrantsContainer.find(SHOW_WARRANT_SELECTOR).length > 0) {
+          cy.get(SHOW_WARRANT_SELECTOR).then($showButtonElements => {
+            for (let j = 0; j < $showButtonElements.length; j++) {
+              cy.get(SHOW_WARRANT_SELECTOR).eq(j).click();
+              cy.get(WARRANT_FRAME_SELECTOR).screenshot();
+              cy.get(GO_BACK_SELECTOR).click();
+            }
+          });
+        }
+      });
+    }
   });
 });
+
+const getDaysInYearMonth = (year, month) => {
+  return new Date(year, month, 0).getDate();
+}
+
+const generateDateStringsForYearMonth = (year, month) => {
+  const daysInMonth = getDaysInYearMonth(year, month);
+  const dateStrings = [];
+
+  for (let i = 1; i <= daysInMonth; i++) {
+    const day = i < 10 ? `0${i}` : i.toString();
+    dateStrings.push(`${day}.${month}.${year}`)
+  }
+
+  console.log(dateStrings)
+
+  return dateStrings;
+}
