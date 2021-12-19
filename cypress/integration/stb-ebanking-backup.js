@@ -1,11 +1,10 @@
 const url = 'https://ebank.stb.com.mk/';
 
-// TODO (filip): Pass this as environment variables
-const username = '<your-username>';
-const password = '<your-password>';
-const accountNumber = '<your-account-number>';
-const year = '<year>';
-const month = '<month>';
+const username = Cypress.env('USERNAME');
+const password = Cypress.env('PASSWORD');
+const accountNumber = Cypress.env('ACCOUNT_NUMBER');
+const year = parseInt(Cypress.env('YEAR'));
+const month = parseInt(Cypress.env('MONTH'));
 
 const ACCOUNT_NUMBER_SELECTOR = '.account-id-lnk > span > a';
 const WARRANTS_CONTAINER_SELECTOR = '#MainContainer_ctl00_regMainContent_regMainContent';
@@ -30,7 +29,7 @@ describe('STB eBanking Backup', () => {
 
     for (const date of generateDateStringsForYearMonth(year, month)) {
       cy.get(DATE_INPUT_SELECTOR).type(`${date}{enter}`);
-      
+
       cy.get(WARRANTS_CONTAINER_SELECTOR).then($warrantsContainer => {
         if ($warrantsContainer.find(SHOW_WARRANT_SELECTOR).length > 0) {
           cy.get(SHOW_WARRANT_SELECTOR).then($showButtonElements => {
