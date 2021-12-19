@@ -5,6 +5,7 @@ const password = Cypress.env('PASSWORD');
 const accountNumber = Cypress.env('ACCOUNT_NUMBER');
 const year = parseInt(Cypress.env('YEAR'));
 const month = parseInt(Cypress.env('MONTH'));
+const warrantsToIgnore = Cypress.env('WARRANTS_TO_IGNORE').split(',')
 
 const ACCOUNT_NUMBER_SELECTOR = '.account-id-lnk > span > a';
 const WARRANTS_CONTAINER_SELECTOR = '#MainContainer_ctl00_regMainContent_regMainContent';
@@ -24,7 +25,7 @@ describe('STB eBanking Backup', () => {
         password,
       },
     });
-
+    
     cy.get(ACCOUNT_NUMBER_SELECTOR).contains(accountNumber).click();
     cy.get(WARRANTS_SELECTOR).contains(WARRANTS_LABEL).click();
 
@@ -35,13 +36,16 @@ describe('STB eBanking Backup', () => {
       cy.get(WARRANTS_CONTAINER_SELECTOR).then($warrantsContainer => {
         if ($warrantsContainer.find(SHOW_WARRANT_SELECTOR).length > 0) {
           cy.get(SHOW_WARRANT_SELECTOR).then($showButtonElements => {
-            for (let j = 0; j < $showButtonElements.length; j++) {
-              cy.get(SHOW_WARRANT_SELECTOR).eq(j).click();
+            for (let i = 0; i < $showButtonElements.length; i++) {
+              cy.get(SHOW_WARRANT_SELECTOR).eq(i).click();
               cy.get(WARRANT_LABEL_SELECTOR).then($warrantLabel => {
-                const warrantLabel = $warrantLabel.val();
-                console.log(`Saving warrant to ${warrantLabel} for date ${date}`);
+                const warrantLabel = $warrantLabel.val().trim();
 
-                cy.get(WARRANT_FRAME_SELECTOR).screenshot(`${year}/${month}/${warrantLabel}`);
+                if (!warrantsToIgnore.includes(warrantLabel)) {
+                  console.log(`Saving warrant to ${warrantLabel} for date ${date}`);
+
+                  cy.get(WARRANT_FRAME_SELECTOR).screenshot(`${year}/${month}/${warrantLabel}`);
+                }
               });
               cy.get(GO_BACK_SELECTOR).click();
             }
