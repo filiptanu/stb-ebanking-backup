@@ -7,7 +7,11 @@
     "start": "ts-node src/index.ts",
     "cypress:open": "cypress open",
     "cy:run": "cypress run",
-    "stb-ebanking-backup": "npm run cy:run  -- --spec \"cypress\\integration\\stb-ebanking-backup.js\"",
+    "stb-ebanking-backup-windows": "npm run execute && npm run copy-to-backup-windows",
+    "stb-ebanking-backup-linux": "npm run execute && npm run copy-to-backup-linux",
+    "execute": "npm run cy:run  -- --spec \"cypress\\integration\\stb-ebanking-backup.js\" & ",
+    "copy-to-backup-windows": "@powershell -NoProfile -ExecutionPolicy Unrestricted -Command ./copy-to-backup.ps1",
+    "copy-to-backup-linux": "sh ./copy-to-backup.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
